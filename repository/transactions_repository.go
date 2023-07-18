@@ -1,22 +1,23 @@
 package repository
 
 import (
-	"database/sql"
-	"fmt"
 	"go-app/team1/entity"
+	"strconv"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/gorm/schema"
 )
 
 type TransactionsRepository interface {
-	GetTransactionsByAccountId(accountId string) []entity.Transactions
-	GetTransactionsByAccountIdAndStatus(accountId string, status string) []entity.Transactions
-	GetTransactionsByAccountIdFromParticularDate(accountId string, dateTime time.Time) (transactions []entity.Transactions)
-	GetTransactionsByAccountIdFromParticularDateAndStatus(accountId string, dateTime time.Time, status string) (transactions []entity.Transactions)
-	GetTransacationsByAccountIdBetweenDateTime(accountId string, fromDateTime time.Time, toDateTime time.Time) (transactions []entity.Transactions)
-	GetTransacationsByAccountIdBetweenDateTimeAndStatus(accountId string, fromDateTime time.Time, toDateTime time.Time, status string) (transactions []entity.Transactions)
+	GetTransactionsByAccountId(accountId string, ctx *gin.Context) []entity.Transactions
+	GetTransactionsByAccountIdAndStatus(accountId string, status string, ctx *gin.Context) []entity.Transactions
+	GetTransactionsByAccountIdFromParticularDate(accountId string, dateTime time.Time, ctx *gin.Context) (transactions []entity.Transactions)
+	GetTransactionsByAccountIdFromParticularDateAndStatus(accountId string, dateTime time.Time, status string, ctx *gin.Context) (transactions []entity.Transactions)
+	GetTransacationsByAccountIdBetweenDateTime(accountId string, fromDateTime time.Time, toDateTime time.Time, ctx *gin.Context) (transactions []entity.Transactions)
+	GetTransacationsByAccountIdBetweenDateTimeAndStatus(accountId string, fromDateTime time.Time, toDateTime time.Time, status string, ctx *gin.Context) (transactions []entity.Transactions)
 
 	GetTransactionByTransactionId(transactionId string) (transaction entity.Transactions)
 }
@@ -31,177 +32,192 @@ func New() TransactionsRepository {
 
 var dsn = "host=localhost user=postgres password=postgres dbname=workshop sslmode=disable"
 
-func (repository *transactionsRepository) GetTransactionsByAccountId(accountId string) []entity.Transactions {
+func (repository *transactionsRepository) GetTransactionsByAccountId(accountId string, ctx *gin.Context) []entity.Transactions {
 
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	// db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
+		NamingStrategy: schema.NamingStrategy{
+			TablePrefix:   "transaction.",
+			SingularTable: false,
+		},
+	})
+
 	if err != nil {
 		panic(err.Error())
 	}
 
-	// Get generic database object sql.DB to use its functions
-	sqlDB, err := db.DB()
-
-	rows, err := sqlDB.Query("SELECT * FROM transaction.transactions WHERE acc_id = $1", accountId)
-	if err != nil {
-		panic(err.Error())
+	pageSizeStr := ctx.Query("pageSize")
+	pageSize := 50
+	if pageSizeStr != "" {
+		convPageSize, _ := strconv.Atoi(pageSizeStr)
+		pageSize = convPageSize
 	}
-	defer rows.Close()
+	pageStr := ctx.Query("page")
+	page, _ := strconv.Atoi(pageStr)
+	offset := (page - 1) * pageSize
 
-	return mapResultsToTransactions(rows, err)
-
-}
-
-func (repository *transactionsRepository) GetTransactionsByAccountIdAndStatus(accountId string, status string) []entity.Transactions {
-
-	// dsn := "host=localhost user=postgres password=root dbname=postgres sslmode=disable"
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
-	if err != nil {
-		panic(err.Error())
-	}
-
-	// Get generic database object sql.DB to use its functions
-	sqlDB, err := db.DB()
-	fmt.Printf("Value of Account id  %s", accountId)
-
-	rows, err := sqlDB.Query("SELECT * FROM transaction.transactions WHERE acc_id = $1 and status = $2", accountId, status)
-	if err != nil {
-		panic(err.Error())
-	}
-	defer rows.Close()
-
-	return mapResultsToTransactions(rows, err)
-}
-
-func (repository *transactionsRepository) GetTransactionsByAccountIdFromParticularDate(accountId string, dateTime time.Time) []entity.Transactions {
-
-	// dsn := "host=localhost user=postgres password=root dbname=postgres sslmode=disable"
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
-	if err != nil {
-		panic(err.Error())
-	}
-
-	// Get generic database object sql.DB to use its functions
-	sqlDB, err := db.DB()
-	fmt.Printf("Value of Account id  %s", accountId)
-
-	rows, err := sqlDB.Query("SELECT * FROM transaction.transactions WHERE acc_id = $1 and tx_ts >= $2", accountId, dateTime)
-	if err != nil {
-		panic(err.Error())
-	}
-	defer rows.Close()
-
-	return mapResultsToTransactions(rows, err)
-}
-
-func (repository *transactionsRepository) GetTransactionsByAccountIdFromParticularDateAndStatus(accountId string, dateTime time.Time, status string) []entity.Transactions {
-
-	// dsn := "host=localhost user=postgres password=root dbname=postgres sslmode=disable"
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
-	if err != nil {
-		panic(err.Error())
-	}
-
-	// Get generic database object sql.DB to use its functions
-	sqlDB, err := db.DB()
-
-	rows, err := sqlDB.Query("SELECT * FROM transaction.transactions WHERE acc_id = $1 and tx_ts >= $2 and status = $3", accountId, dateTime, status)
-	if err != nil {
-		panic(err.Error())
-	}
-	defer rows.Close()
-
-	return mapResultsToTransactions(rows, err)
-}
-
-func (repository *transactionsRepository) GetTransacationsByAccountIdBetweenDateTime(accountId string, fromDateTime time.Time, toDateTime time.Time) []entity.Transactions {
-
-	// dsn := "host=localhost user=postgres password=root dbname=postgres sslmode=disable"
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
-	if err != nil {
-		panic(err.Error())
-	}
-
-	// Get generic database object sql.DB to use its functions
-	sqlDB, err := db.DB()
-
-	rows, err := sqlDB.Query("SELECT * FROM transaction.transactions WHERE acc_id = $1 and tx_ts >= $2 and tx_ts < $3 ", accountId, fromDateTime, toDateTime)
-	if err != nil {
-		panic(err.Error())
-	}
-	defer rows.Close()
-	return mapResultsToTransactions(rows, err)
-}
-
-func (repository *transactionsRepository) GetTransacationsByAccountIdBetweenDateTimeAndStatus(accountId string, fromDateTime time.Time, toDateTime time.Time, status string) []entity.Transactions {
-
-	// dsn := "host=localhost user=postgres password=root dbname=postgres sslmode=disable"
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
-	if err != nil {
-		panic(err.Error())
-	}
-
-	// Get generic database object sql.DB to use its functions
-	sqlDB, err := db.DB()
-
-	rows, err := sqlDB.Query("SELECT * FROM transaction.transactions WHERE acc_id = $1 and  tx_ts >= $2 and tx_ts < $3 and status = $4", accountId, fromDateTime, toDateTime, status)
-	if err != nil {
-		panic(err.Error())
-	}
-	defer rows.Close()
-	return mapResultsToTransactions(rows, err)
-}
-
-func mapResultsToTransactions(rows *sql.Rows, err error) []entity.Transactions {
-
-	// An Transactions slice to hold data from returned rows.
 	var transactionRows []entity.Transactions
+	db.Where("acc_id = ?", accountId).Limit(pageSize).Offset(offset).Find(&transactionRows)
 
-	// Loop through rows, using Scan to assign column data to struct fields.
-	for rows.Next() {
-		var transaction entity.Transactions
-		if err := rows.Scan(&transaction.TransactionId, &transaction.AccountId, &transaction.TransactionTimeStamp,
-			&transaction.Status, &transaction.Amount, &transaction.MerchantName, &transaction.MerchantId,
-			&transaction.TransactionType, &transaction.TransactionDetails); err != nil {
-			return transactionRows
-		}
-		transactionRows = append(transactionRows, transaction)
+	return transactionRows
+}
+
+func (repository *transactionsRepository) GetTransactionsByAccountIdAndStatus(accountId string, status string, ctx *gin.Context) []entity.Transactions {
+
+	// dsn := "host=localhost user=postgres password=root dbname=postgres sslmode=disable"
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
+		NamingStrategy: schema.NamingStrategy{
+			TablePrefix:   "transaction.",
+			SingularTable: false,
+		},
+	})
+	if err != nil {
+		panic(err.Error())
 	}
-	if err = rows.Err(); err != nil {
-		return transactionRows
+	pageSizeStr := ctx.Query("pageSize")
+	pageSize := 50
+	if pageSizeStr != "" {
+		convPageSize, _ := strconv.Atoi(pageSizeStr)
+		pageSize = convPageSize
 	}
+	pageStr := ctx.Query("page")
+	page, _ := strconv.Atoi(pageStr)
+	offset := (page - 1) * pageSize
+
+	var transactionRows []entity.Transactions
+	db.Where("acc_id = ? and status = ?", accountId, status).Limit(pageSize).Offset(offset).Find(&transactionRows)
+
+	return transactionRows
+}
+
+func (repository *transactionsRepository) GetTransactionsByAccountIdFromParticularDate(accountId string, dateTime time.Time, ctx *gin.Context) []entity.Transactions {
+
+	// dsn := "host=localhost user=postgres password=root dbname=postgres sslmode=disable"
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
+		NamingStrategy: schema.NamingStrategy{
+			TablePrefix:   "transaction.",
+			SingularTable: false,
+		},
+	})
+	if err != nil {
+		panic(err.Error())
+	}
+	pageSizeStr := ctx.Query("pageSize")
+	pageSize := 50
+	if pageSizeStr != "" {
+		convPageSize, _ := strconv.Atoi(pageSizeStr)
+		pageSize = convPageSize
+	}
+	pageStr := ctx.Query("page")
+	page, _ := strconv.Atoi(pageStr)
+	offset := (page - 1) * pageSize
+
+	var transactionRows []entity.Transactions
+	db.Where("acc_id = ? and tx_ts >= ?", accountId, dateTime).Limit(pageSize).Offset(offset).Find(&transactionRows)
+
+	return transactionRows
+}
+
+func (repository *transactionsRepository) GetTransactionsByAccountIdFromParticularDateAndStatus(accountId string, dateTime time.Time, status string, ctx *gin.Context) []entity.Transactions {
+
+	// dsn := "host=localhost user=postgres password=root dbname=postgres sslmode=disable"
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
+		NamingStrategy: schema.NamingStrategy{
+			TablePrefix:   "transaction.",
+			SingularTable: false,
+		},
+	})
+	if err != nil {
+		panic(err.Error())
+	}
+	pageSizeStr := ctx.Query("pageSize")
+	pageSize := 50
+	if pageSizeStr != "" {
+		convPageSize, _ := strconv.Atoi(pageSizeStr)
+		pageSize = convPageSize
+	}
+	pageStr := ctx.Query("page")
+	page, _ := strconv.Atoi(pageStr)
+	offset := (page - 1) * pageSize
+
+	var transactionRows []entity.Transactions
+	db.Where("acc_id = ? and tx_ts >= ? and status =?", accountId, dateTime, status).Limit(pageSize).Offset(offset).Find(&transactionRows)
+
+	return transactionRows
+}
+
+func (repository *transactionsRepository) GetTransacationsByAccountIdBetweenDateTime(accountId string, fromDateTime time.Time, toDateTime time.Time, ctx *gin.Context) []entity.Transactions {
+
+	// dsn := "host=localhost user=postgres password=root dbname=postgres sslmode=disable"
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
+		NamingStrategy: schema.NamingStrategy{
+			TablePrefix:   "transaction.",
+			SingularTable: false,
+		},
+	})
+	if err != nil {
+		panic(err.Error())
+	}
+	pageSizeStr := ctx.Query("pageSize")
+	pageSize := 50
+	if pageSizeStr != "" {
+		convPageSize, _ := strconv.Atoi(pageSizeStr)
+		pageSize = convPageSize
+	}
+	pageStr := ctx.Query("page")
+	page, _ := strconv.Atoi(pageStr)
+	offset := (page - 1) * pageSize
+
+	var transactionRows []entity.Transactions
+	db.Where("acc_id = ? and tx_ts >= ? and tx_ts <= ? ", accountId, fromDateTime, toDateTime).Limit(pageSize).Offset(offset).Find(&transactionRows)
+
+	return transactionRows
+}
+
+func (repository *transactionsRepository) GetTransacationsByAccountIdBetweenDateTimeAndStatus(accountId string, fromDateTime time.Time, toDateTime time.Time, status string, ctx *gin.Context) []entity.Transactions {
+
+	// dsn := "host=localhost user=postgres password=root dbname=postgres sslmode=disable"
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
+		NamingStrategy: schema.NamingStrategy{
+			TablePrefix:   "transaction.",
+			SingularTable: false,
+		},
+	})
+	if err != nil {
+		panic(err.Error())
+	}
+	pageSizeStr := ctx.Query("pageSize")
+	pageSize := 50
+	if pageSizeStr != "" {
+		convPageSize, _ := strconv.Atoi(pageSizeStr)
+		pageSize = convPageSize
+	}
+	pageStr := ctx.Query("page")
+	page, _ := strconv.Atoi(pageStr)
+	offset := (page - 1) * pageSize
+
+	var transactionRows []entity.Transactions
+	db.Where("acc_id = ? and tx_ts >= ? and tx_ts <= ? and status =?", accountId, fromDateTime, toDateTime, status).Limit(pageSize).Offset(offset).Find(&transactionRows)
+
 	return transactionRows
 }
 
 func (repository *transactionsRepository) GetTransactionByTransactionId(transactionId string) entity.Transactions {
 
 	// dsn := "host=localhost user=postgres password=root dbname=postgres sslmode=disable"
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
+		NamingStrategy: schema.NamingStrategy{
+			TablePrefix:   "transaction.",
+			SingularTable: false,
+		},
+	})
 	if err != nil {
 		panic(err.Error())
 	}
 
-	// Get generic database object sql.DB to use its functions
-	sqlDB, err := db.DB()
-	fmt.Printf("Transaction id : %s", transactionId)
-	rows, err := sqlDB.Query("SELECT * FROM transaction.transactions WHERE tx_id = $1 ", transactionId)
-	if err != nil {
-		panic(err.Error())
-	}
-	defer rows.Close()
-	// An Transactions slice to hold data from returned rows.
 	var transactionRow entity.Transactions
-	for rows.Next() {
-		// Loop through rows, using Scan to assign column data to struct fields.
-		var transaction entity.Transactions
-		if err := rows.Scan(&transaction.TransactionId, &transaction.AccountId, &transaction.TransactionTimeStamp,
-			&transaction.Status, &transaction.Amount, &transaction.MerchantName, &transaction.MerchantId,
-			&transaction.TransactionType, &transaction.TransactionDetails); err != nil {
-			return transactionRow
-		}
-		transactionRow = transaction
-	}
-	if err = rows.Err(); err != nil {
-		return transactionRow
-	}
+	db.Where("tx_id = ?", transactionId).Find(&transactionRow)
+
 	return transactionRow
 }

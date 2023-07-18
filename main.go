@@ -46,7 +46,7 @@ func main() {
 				panic(err.Error())
 			}
 
-			ctx.JSON(200, transactionsController.FindTransacationsByAccountIdBetweenDateTimeAndStatus(accountId, theFromTime, theToTime, status))
+			ctx.JSON(200, transactionsController.FindTransacationsByAccountIdBetweenDateTimeAndStatus(accountId, theFromTime, theToTime, status, ctx))
 
 		} else if len(fromDateTime) > 0 {
 			theTime, err := time.Parse(time.DateTime, fromDateTime)
@@ -54,10 +54,10 @@ func main() {
 				panic(err.Error())
 			}
 
-			ctx.JSON(200, transactionsController.FindTransactionsByAccountIdFromDateTimeAndStatus(accountId, theTime, status))
+			ctx.JSON(200, transactionsController.FindTransactionsByAccountIdFromDateTimeAndStatus(accountId, theTime, status, ctx))
 
 		} else {
-			ctx.JSON(200, transactionsController.FindTransactionsByAccountId(accountId, status))
+			ctx.JSON(200, transactionsController.FindTransactionsByAccountId(accountId, status, ctx))
 		}
 
 	})
