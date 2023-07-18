@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
-	"test/controller"
-	"test/repository"
-	"test/service"
+	"go-app/team1/controller"
+	"go-app/team1/repository"
+	"go-app/team1/service"
 	"time"
 
 	"github.com/gin-gonic/gin"

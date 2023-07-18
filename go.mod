@@ -1,4 +1,4 @@
-module test
+module go-app/team1
 
 go 1.20
 

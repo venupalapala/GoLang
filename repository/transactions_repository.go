@@ -2,7 +2,7 @@ package repository
 
 import (
 	"fmt"
-	"test/entity"
+	"go-app/team1/entity"
 	"time"
 
 	"gorm.io/driver/postgres"

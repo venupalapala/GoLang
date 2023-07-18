@@ -1,8 +1,8 @@
 package service
 
 import (
-	"test/entity"
-	"test/repository"
+	"go-app/team1/entity"
+	"go-app/team1/repository"
 	"time"
 )
 

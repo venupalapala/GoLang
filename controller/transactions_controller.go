@@ -1,8 +1,8 @@
 package controller
 
 import (
-	"test/entity"
-	"test/service"
+	"go-app/team1/entity"
+	"go-app/team1/service"
 	"time"
 )
 
