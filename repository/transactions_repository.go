@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"database/sql"
 	"fmt"
 	"go-app/team1/entity"
 	"time"
@@ -28,9 +29,10 @@ func New() TransactionsRepository {
 	return &transactionsRepository{}
 }
 
+var dsn = "host=localhost user=postgres password=root dbname=postgres sslmode=disable"
+
 func (repository *transactionsRepository) GetTransactionsByAccountId(accountId string) []entity.Transactions {
 
-	dsn := "host=localhost user=postgres password=root dbname=postgres sslmode=disable"
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		panic(err.Error())
@@ -38,7 +40,6 @@ func (repository *transactionsRepository) GetTransactionsByAccountId(accountId s
 
 	// Get generic database object sql.DB to use its functions
 	sqlDB, err := db.DB()
-	fmt.Printf("Value of Account id  %s", accountId)
 
 	rows, err := sqlDB.Query("SELECT * FROM transaction.transactions WHERE acc_id = $1", accountId)
 	if err != nil {
@@ -46,28 +47,13 @@ func (repository *transactionsRepository) GetTransactionsByAccountId(accountId s
 	}
 	defer rows.Close()
 
-	// An Transactions slice to hold data from returned rows.
-	var transactionRows []entity.Transactions
+	return mapResultsToTransactions(rows, err)
 
-	// Loop through rows, using Scan to assign column data to struct fields.
-	for rows.Next() {
-		var transaction entity.Transactions
-		if err := rows.Scan(&transaction.TransactionId, &transaction.AccountId, &transaction.TransactionTimeStamp,
-			&transaction.Status, &transaction.Amount, &transaction.MerchantName, &transaction.MerchantId,
-			&transaction.TransactionType, &transaction.TransactionDetails); err != nil {
-			return transactionRows
-		}
-		transactionRows = append(transactionRows, transaction)
-	}
-	if err = rows.Err(); err != nil {
-		return transactionRows
-	}
-	return transactionRows
 }
 
 func (repository *transactionsRepository) GetTransactionsByAccountIdAndStatus(accountId string, status string) []entity.Transactions {
 
-	dsn := "host=localhost user=postgres password=root dbname=postgres sslmode=disable"
+	// dsn := "host=localhost user=postgres password=root dbname=postgres sslmode=disable"
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		panic(err.Error())
@@ -83,28 +69,12 @@ func (repository *transactionsRepository) GetTransactionsByAccountIdAndStatus(ac
 	}
 	defer rows.Close()
 
-	// An Transactions slice to hold data from returned rows.
-	var transactionRows []entity.Transactions
-
-	// Loop through rows, using Scan to assign column data to struct fields.
-	for rows.Next() {
-		var transaction entity.Transactions
-		if err := rows.Scan(&transaction.TransactionId, &transaction.AccountId, &transaction.TransactionTimeStamp,
-			&transaction.Status, &transaction.Amount, &transaction.MerchantName, &transaction.MerchantId,
-			&transaction.TransactionType, &transaction.TransactionDetails); err != nil {
-			return transactionRows
-		}
-		transactionRows = append(transactionRows, transaction)
-	}
-	if err = rows.Err(); err != nil {
-		return transactionRows
-	}
-	return transactionRows
+	return mapResultsToTransactions(rows, err)
 }
 
 func (repository *transactionsRepository) GetTransactionsByAccountIdFromParticularDate(accountId string, dateTime time.Time) []entity.Transactions {
 
-	dsn := "host=localhost user=postgres password=root dbname=postgres sslmode=disable"
+	// dsn := "host=localhost user=postgres password=root dbname=postgres sslmode=disable"
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		panic(err.Error())
@@ -120,28 +90,12 @@ func (repository *transactionsRepository) GetTransactionsByAccountIdFromParticul
 	}
 	defer rows.Close()
 
-	// An Transactions slice to hold data from returned rows.
-	var transactionRows []entity.Transactions
-
-	// Loop through rows, using Scan to assign column data to struct fields.
-	for rows.Next() {
-		var transaction entity.Transactions
-		if err := rows.Scan(&transaction.TransactionId, &transaction.AccountId, &transaction.TransactionTimeStamp,
-			&transaction.Status, &transaction.Amount, &transaction.MerchantName, &transaction.MerchantId,
-			&transaction.TransactionType, &transaction.TransactionDetails); err != nil {
-			return transactionRows
-		}
-		transactionRows = append(transactionRows, transaction)
-	}
-	if err = rows.Err(); err != nil {
-		return transactionRows
-	}
-	return transactionRows
+	return mapResultsToTransactions(rows, err)
 }
 
 func (repository *transactionsRepository) GetTransactionsByAccountIdFromParticularDateAndStatus(accountId string, dateTime time.Time, status string) []entity.Transactions {
 
-	dsn := "host=localhost user=postgres password=root dbname=postgres sslmode=disable"
+	// dsn := "host=localhost user=postgres password=root dbname=postgres sslmode=disable"
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		panic(err.Error())
@@ -156,28 +110,12 @@ func (repository *transactionsRepository) GetTransactionsByAccountIdFromParticul
 	}
 	defer rows.Close()
 
-	// An Transactions slice to hold data from returned rows.
-	var transactionRows []entity.Transactions
-
-	// Loop through rows, using Scan to assign column data to struct fields.
-	for rows.Next() {
-		var transaction entity.Transactions
-		if err := rows.Scan(&transaction.TransactionId, &transaction.AccountId, &transaction.TransactionTimeStamp,
-			&transaction.Status, &transaction.Amount, &transaction.MerchantName, &transaction.MerchantId,
-			&transaction.TransactionType, &transaction.TransactionDetails); err != nil {
-			return transactionRows
-		}
-		transactionRows = append(transactionRows, transaction)
-	}
-	if err = rows.Err(); err != nil {
-		return transactionRows
-	}
-	return transactionRows
+	return mapResultsToTransactions(rows, err)
 }
 
 func (repository *transactionsRepository) GetTransacationsByAccountIdBetweenDateTime(accountId string, fromDateTime time.Time, toDateTime time.Time) []entity.Transactions {
 
-	dsn := "host=localhost user=postgres password=root dbname=postgres sslmode=disable"
+	// dsn := "host=localhost user=postgres password=root dbname=postgres sslmode=disable"
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		panic(err.Error())
@@ -191,29 +129,12 @@ func (repository *transactionsRepository) GetTransacationsByAccountIdBetweenDate
 		panic(err.Error())
 	}
 	defer rows.Close()
-
-	// An Transactions slice to hold data from returned rows.
-	var transactionRows []entity.Transactions
-
-	// Loop through rows, using Scan to assign column data to struct fields.
-	for rows.Next() {
-		var transaction entity.Transactions
-		if err := rows.Scan(&transaction.TransactionId, &transaction.AccountId, &transaction.TransactionTimeStamp,
-			&transaction.Status, &transaction.Amount, &transaction.MerchantName, &transaction.MerchantId,
-			&transaction.TransactionType, &transaction.TransactionDetails); err != nil {
-			return transactionRows
-		}
-		transactionRows = append(transactionRows, transaction)
-	}
-	if err = rows.Err(); err != nil {
-		return transactionRows
-	}
-	return transactionRows
+	return mapResultsToTransactions(rows, err)
 }
 
 func (repository *transactionsRepository) GetTransacationsByAccountIdBetweenDateTimeAndStatus(accountId string, fromDateTime time.Time, toDateTime time.Time, status string) []entity.Transactions {
 
-	dsn := "host=localhost user=postgres password=root dbname=postgres sslmode=disable"
+	// dsn := "host=localhost user=postgres password=root dbname=postgres sslmode=disable"
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		panic(err.Error())
@@ -227,6 +148,10 @@ func (repository *transactionsRepository) GetTransacationsByAccountIdBetweenDate
 		panic(err.Error())
 	}
 	defer rows.Close()
+	return mapResultsToTransactions(rows, err)
+}
+
+func mapResultsToTransactions(rows *sql.Rows, err error) []entity.Transactions {
 
 	// An Transactions slice to hold data from returned rows.
 	var transactionRows []entity.Transactions
@@ -249,7 +174,7 @@ func (repository *transactionsRepository) GetTransacationsByAccountIdBetweenDate
 
 func (repository *transactionsRepository) GetTransactionByTransactionId(transactionId string) entity.Transactions {
 
-	dsn := "host=localhost user=postgres password=root dbname=postgres sslmode=disable"
+	// dsn := "host=localhost user=postgres password=root dbname=postgres sslmode=disable"
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		panic(err.Error())
