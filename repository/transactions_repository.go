@@ -30,7 +30,7 @@ func New() TransactionsRepository {
 	return &transactionsRepository{}
 }
 
-var dsn = "host=localhost user=postgres password=postgres dbname=workshop sslmode=disable"
+var dsn = "host=pgdb user=postgres password=postgres dbname=workshop sslmode=disable"
 
 func (repository *transactionsRepository) GetTransactionsByAccountId(accountId string, ctx *gin.Context) []entity.Transactions {
 
